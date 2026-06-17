@@ -101,3 +101,6 @@ token=PASTE_YOUR_TOKEN_HERE; Path=/
 ### One thing to watch
 
 If you mark the cookie as Secure, Postman may refuse to send it over plain http on localhost. While you test on http, keep the Secure flag off, or switch to https. If /api/me cannot see your cookie, this is the first thing to check.
+
+### NOTE
+I couldn't check it after completing,so if there are some problems I'll be able to fix them tomorrow
