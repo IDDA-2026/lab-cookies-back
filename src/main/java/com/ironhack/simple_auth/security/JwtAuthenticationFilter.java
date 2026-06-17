@@ -3,6 +3,7 @@ package com.ironhack.simple_auth.security;
 import java.io.IOException;
 import java.util.List;
 
+import jakarta.servlet.http.Cookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,14 +17,13 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.util.WebUtils;
 
 /**
  * Runs once per request. It looks for a JWT, validates it, and if valid tells
  * Spring Security "this request is authenticated as that user".
  *
- * TODAY it reads the token from the "Authorization: Bearer ..." header.
- * IN CLASS we change ONLY the "where do we read the token from" part:
- * instead of the header, we'll read it from the httpOnly cookie named "token".
+ * Reads the JWT from the httpOnly cookie named "token".
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -55,11 +55,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /** Pull the token out of the "Authorization: Bearer <token>" header. */
     private String resolveToken(HttpServletRequest request) {
-        String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
-            return header.substring(7);
+        Cookie cookie = WebUtils.getCookie(request, "token");
+
+        if (cookie != null) {
+            return cookie.getValue();
         }
         return null;
     }
