@@ -64,17 +64,12 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * CORS for local development.
-     *
-     * NOTE FOR CLASS: there is no setAllowCredentials(true) here yet. Cookies
-     * will NOT cross origin until we add it (together with the exact origin,
-     * never "*"). That's one of the changes we make live in the lesson.
-     */
+    /** CORS for local development with cookie credentials enabled. */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:3000"));
+        config.setAllowCredentials(true);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
 
