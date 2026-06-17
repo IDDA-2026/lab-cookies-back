@@ -1,4 +1,6 @@
 package com.ironhack.simple_auth.dto;
-
-public record LoginRequest(String email, String password) {
-}
+@Data
+    public static class LoginRequest {
+        private String email;
+        private String password;
+    }
