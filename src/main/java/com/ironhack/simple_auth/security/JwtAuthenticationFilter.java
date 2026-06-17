@@ -57,14 +57,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     /** Pull the token out of the "Authorization: Bearer <token>" header. */
     private String resolveToken(HttpServletRequest request) {
-        String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
-            return header.substring(7);
+        jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+        for (var cookie : cookies) {
+            if ("token".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
         }
-        return null;
     }
-
-    private List<SimpleGrantedAuthority> authorities(User user) {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
-    }
+    return null;
+}
+private List<SimpleGrantedAuthority> authorities(User user) {
+    return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
+}
 }
