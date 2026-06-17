@@ -1,5 +1,7 @@
 # Spring Boot: Cookies example
 
+<img alt="a guy hugging the java logo" src="./public/main.png" />
+
 ## What this project is
 
 This is the **starting example** for the lesson. It is a working Spring Boot backend that already has signup, login, a protected route, and logout.
