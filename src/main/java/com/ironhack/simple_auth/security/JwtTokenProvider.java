@@ -1,71 +1,53 @@
 package com.ironhack.simple_auth.security;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
-
-import javax.crypto.SecretKey;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import com.ironhack.simple_auth.model.User;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-
-/**
- * Signs and verifies JWTs. This is the "Unit 4" class the lesson refers to.
- * It does NOT care where the token is stored (header today, cookie tomorrow) —
- * it only creates and validates the token string itself.
- */
-@Component
-public class JwtTokenProvider {
-
-    private final SecretKey key;
-    private final long expirationMs;
-
-    public JwtTokenProvider(
-            @Value("${app.jwt.secret}") String secret,
-            @Value("${app.jwt.expiration-ms}") long expirationMs) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.expirationMs = expirationMs;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+ 
+import java.security.Key;
+import java.util.Date;
+ 
+@Service
+public class JwtService {
+ 
+    @Value("${app.jwt.secret}")
+    private String jwtSecret;
+ 
+    @Value("${app.jwt.expiration-ms}")
+    private long jwtExpirationMs;
+ 
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
-
-    /** Build a signed token whose subject is the user's email, with a role claim. */
-    public String createToken(User user) {
-        Date now = new Date();
-        Date expiry = new Date(now.getTime() + expirationMs);
-
+ 
+    public String generateToken(String email) {
         return Jwts.builder()
-                .subject(user.getEmail())
-                .claim("role", user.getRole())
-                .issuedAt(now)
-                .expiration(expiry)
-                .signWith(key)
+                .setSubject(email)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
-
-    /** Returns true if the token's signature and expiry are valid. */
-    public boolean validateToken(String token) {
+ 
+    public String extractEmail(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
+ 
+    public boolean isTokenValid(String token) {
         try {
-            parse(token);
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token);
             return true;
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
-    }
-
-    /** Extract the email (subject) from a valid token. */
-    public String getEmail(String token) {
-        return parse(token).getSubject();
-    }
-
-    private Claims parse(String token) {
-        return Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
     }
 }
