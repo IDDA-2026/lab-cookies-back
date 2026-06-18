@@ -1,6 +1,7 @@
 package com.ironhack.simple_auth.security;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,6 +15,7 @@ import com.ironhack.simple_auth.repository.UserRepository;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -55,13 +57,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /** Pull the token out of the "Authorization: Bearer <token>" header. */
     private String resolveToken(HttpServletRequest request) {
-        String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
-            return header.substring(7);
-        }
-        return null;
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) return null;
+        return Arrays.stream(cookies)
+                .filter(c -> "token".equals(c.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
     }
 
     private List<SimpleGrantedAuthority> authorities(User user) {
