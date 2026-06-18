@@ -17,13 +17,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/**
- * Wires Spring Security together:
- *  - which routes are public vs. protected
- *  - stateless sessions (we trust the JWT, not a server session)
- *  - our JWT filter runs before the username/password filter
- *  - CORS so the Next.js app on :3000 can call us
- */
+
 @Configuration
 public class SecurityConfig {
 
@@ -50,7 +44,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/signup", "/api/login").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .anyRequest().authenticated())
-                // The H2 console renders inside a frame; allow it
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .addFilterBefore(jwtAuthenticationFilter,
@@ -64,19 +57,14 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * CORS for local development.
-     *
-     * NOTE FOR CLASS: there is no setAllowCredentials(true) here yet. Cookies
-     * will NOT cross origin until we add it (together with the exact origin,
-     * never "*"). That's one of the changes we make live in the lesson.
-     */
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:3000"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
+        config.setAllowCredentials(true); 
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
