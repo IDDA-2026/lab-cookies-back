@@ -1,9 +1,13 @@
 package com.ironhack.simple_auth.controller;
 
+import java.time.Duration;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +19,8 @@ import com.ironhack.simple_auth.dto.UserDto;
 import com.ironhack.simple_auth.model.User;
 import com.ironhack.simple_auth.security.JwtTokenProvider;
 import com.ironhack.simple_auth.service.AuthService;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/api")
@@ -28,7 +34,10 @@ public class AuthController {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
-    /** Public: register a new user, then hand back a token (in the body, for now). */
+    /**
+     * Public: register a new user, then hand back a token (in the body, for
+     * now).
+     */
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> signup(@RequestBody SignupRequest request) {
         User user = authService.signup(request);
@@ -37,30 +46,55 @@ public class AuthController {
     }
 
     /**
-     * Public: validate credentials and return a JWT
-     * TODO: move it into an httpOnly cookie via ResponseCookie + the Set-Cookie header, and the body will carry only the UserDto.
+     * Public: validate credentials and return a JWT TODO: move it into an
+     * httpOnly cookie via ResponseCookie + the Set-Cookie header, and the body
+     * will carry only the UserDto.
      */
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(
+            @RequestBody LoginRequest request,
+            HttpServletResponse response
+    ) {
         User user = authService.authenticate(request.email(), request.password());
         String jwt = jwtTokenProvider.createToken(user);
-        return ResponseEntity.ok(new AuthResponse(UserDto.from(user), jwt));
+        ResponseCookie cookie = ResponseCookie.from("token", jwt)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(Duration.ofHours(24))
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return ResponseEntity.ok(UserDto.from(user));
     }
 
-    /** Protected: returns the currently authenticated user. */
+    /**
+     * Protected: returns the currently authenticated user.
+     */
     @GetMapping("/me")
     public ResponseEntity<UserDto> me(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(UserDto.from(user));
     }
 
     /**
-     * Protected: logout.
-     * With a token-in-the-body model there is nothing to clear server-side —
-     * the client just discards its token. In class this becomes the place where
-     * we expire the httpOnly cookie (ResponseCookie ... maxAge(0)).
+     * Protected: logout. With a token-in-the-body model there is nothing to
+     * clear server-side — the client just discards its token. In class this
+     * becomes the place where we expire the httpOnly cookie (ResponseCookie ...
+     * maxAge(0)).
      */
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from("token", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
         return ResponseEntity.ok().build();
+
     }
 }
