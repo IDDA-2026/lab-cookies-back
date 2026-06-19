@@ -6,5 +6,5 @@ package com.ironhack.simple_auth.dto;
  * In class this is exactly what we change: the token will move OUT of the body
  * and into an httpOnly cookie, leaving only the UserDto here.
  */
-public record AuthResponse(UserDto user, String token) {
+public record AuthResponse(UserDto user) {
 }

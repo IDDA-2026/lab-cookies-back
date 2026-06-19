@@ -68,4 +68,9 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload();
     }
+
+    /** So callers (e.g. the cookie maxAge) can stay in sync with the token's own expiry. */
+    public long getExpirationMs() {
+        return expirationMs;
+    }
 }
