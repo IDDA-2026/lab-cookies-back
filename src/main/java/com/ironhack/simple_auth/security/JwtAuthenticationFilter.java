@@ -57,10 +57,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     /** Pull the token out of the "Authorization: Bearer <token>" header. */
     private String resolveToken(HttpServletRequest request) {
+        // First try the cookie named "token"
+        jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (jakarta.servlet.http.Cookie c : cookies) {
+                if ("token".equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
+        }
+
+        // Fallback to the Authorization header (Bearer ...)
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             return header.substring(7);
         }
+
         return null;
     }
 
