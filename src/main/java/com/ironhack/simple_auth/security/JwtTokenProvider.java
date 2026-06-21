@@ -32,6 +32,10 @@ public class JwtTokenProvider {
         this.expirationMs = expirationMs;
     }
 
+    public long getExpirationMs() {
+        return expirationMs;
+    }
+
     /** Build a signed token whose subject is the user's email, with a role claim. */
     public String createToken(User user) {
         Date now = new Date();

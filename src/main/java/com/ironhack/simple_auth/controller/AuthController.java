@@ -1,6 +1,8 @@
 package com.ironhack.simple_auth.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,14 +39,22 @@ public class AuthController {
     }
 
     /**
-     * Public: validate credentials and return a JWT
-     * TODO: move it into an httpOnly cookie via ResponseCookie + the Set-Cookie header, and the body will carry only the UserDto.
-     */
+    /** Public: validate credentials and return a JWT. Sets an httpOnly cookie named "token" and returns only the UserDto in the body. */
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<UserDto> login(@RequestBody LoginRequest request) {
         User user = authService.authenticate(request.email(), request.password());
         String jwt = jwtTokenProvider.createToken(user);
-        return ResponseEntity.ok(new AuthResponse(UserDto.from(user), jwt));
+
+        long maxAgeSeconds = jwtTokenProvider.getExpirationMs() / 1000L;
+        ResponseCookie cookie = ResponseCookie.from("token", jwt)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(maxAgeSeconds)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(UserDto.from(user));
     }
 
     /** Protected: returns the currently authenticated user. */
@@ -61,6 +71,14 @@ public class AuthController {
      */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
-        return ResponseEntity.ok().build();
+        ResponseCookie cookie = ResponseCookie.from("token", "")
+                .httpOnly(true)
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .build();
     }
 }
