@@ -19,10 +19,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * Wires Spring Security together:
- *  - which routes are public vs. protected
- *  - stateless sessions (we trust the JWT, not a server session)
- *  - our JWT filter runs before the username/password filter
- *  - CORS so the Next.js app on :3000 can call us
+ * - which routes are public vs. protected
+ * - stateless sessions (we trust the JWT, not a server session)
+ * - our JWT filter runs before the username/password filter
+ * - CORS so the Next.js app on :3000 can call us
  */
 @Configuration
 public class SecurityConfig {
@@ -66,17 +66,19 @@ public class SecurityConfig {
 
     /**
      * CORS for local development.
-     *
-     * NOTE FOR CLASS: there is no setAllowCredentials(true) here yet. Cookies
-     * will NOT cross origin until we add it (together with the exact origin,
-     * never "*"). That's one of the changes we make live in the lesson.
+     * Fixed: Added allowCredentials(true) and OPTIONS method to accept Next.js cookies.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:3000"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+
+        // OPTIONS metodu preflight sorğuları (baxış sorğuları) üçün mütləqdir
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
+
+        // Next.js-dən gələn credentials: "include" (cookie) ayarını qəbul etmək üçün:
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
