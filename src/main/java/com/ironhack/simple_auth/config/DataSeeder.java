@@ -7,11 +7,6 @@ import org.springframework.stereotype.Component;
 import com.ironhack.simple_auth.model.User;
 import com.ironhack.simple_auth.repository.UserRepository;
 
-/**
- * Seeds a demo user on startup so login works immediately during the lesson.
- *   email:    demo@ironhack.com
- *   password: password
- */
 @Component
 public class DataSeeder implements CommandLineRunner {
 
@@ -25,17 +20,23 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (userRepository.existsByEmail("demo@ironhack.com")) {
+        seedUser("demo@ironhack.com", "Demo User", "USER");
+        seedUser("admin@ironhack.com", "Admin User", "ADMIN");
+
+        System.out.println(">> Default users seeded...");
+    }
+
+    private void seedUser(String email, String name, String role) {
+        if (userRepository.existsByEmail(email)) {
             return;
         }
 
         User demo = new User();
-        demo.setName("Demo User");
-        demo.setEmail("demo@ironhack.com");
+        demo.setName(name);
+        demo.setEmail(email);
         demo.setPassword(passwordEncoder.encode("password"));
-        demo.setRole("USER");
+        demo.setRole(role);
 
         userRepository.save(demo);
-        System.out.println(">> Seeded demo user: demo@ironhack.com / password");
     }
 }
