@@ -49,10 +49,10 @@ public class AuthController {
         User user = authService.authenticate(request.email(), request.password());
         String jwt = jwtTokenProvider.createToken(user);
 
-        // Build the httpOnly cookie
+
         ResponseCookie cookie = ResponseCookie.from("token", jwt)
                 .httpOnly(true)
-                .secure(false)          // set to true in production with HTTPS
+                .secure(false)
                 .sameSite("Strict")
                 .path("/")
                 .maxAge(Duration.ofHours(1))
@@ -84,7 +84,7 @@ public class AuthController {
                 .secure(false)
                 .sameSite("Strict")
                 .path("/")
-                .maxAge(0)          // expires immediately
+                .maxAge(0)
                 .build();
 
         return ResponseEntity.ok()
